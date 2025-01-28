@@ -177,7 +177,6 @@
   <div class="container">
     <div class="amidakuji-area">
       <svg id="amidakujiSvg" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid meet">
-        <!-- 用JS生成7条蛇形曲线、随机横梁，以及顶部圆点 -->
         <circle id="movingCircle" r="8" cx="0" cy="0" />
       </svg>
     </div>
@@ -207,20 +206,12 @@
     const blessings = [
       { text: "数学全满分", icon: "📚" },
       { text: "越来越聪明", icon: "🎓" },
-      { text: "快乐能量满满", icon: "🎈" },
       { text: "打败难题大魔王", icon: "👾" },
       { text: "身体壮壮不生病", icon: "💪" },
       { text: "天天笑容灿烂", icon: "😊" },
       { text: "看透一切知识的本质", icon: "🔍" },
-      { text: "新年快乐", icon: "🧨" },
-      { text: "学业进步", icon: "📖" },
-      { text: "健康成长", icon: "🌱" },
-      { text: "心想事成", icon: "🌟" },
-      { text: "变身天才数学家", icon: "🎨" },
-    //   { text: "勇敢做自己", icon: "💖" },
-    //   { text: "友情常在", icon: "🤝" },
-    //   { text: "天天都有好心情", icon: "😆" },
-    //   { text: "成为音乐小达人", icon: "🎵" },
+      { text: "新年快乐、红包多多", icon: "🧨" },
+      { text: "学习进步、健康成长", icon: "🌱" },
       { text: "幸运常伴你左右", icon: "🌈" },
       { text: "记忆超群、过目不忘", icon: "✨" },
     ];
@@ -232,7 +223,7 @@
       temp.splice(idx,1);
     }
 
-    // 在SVG中，要为7列生成“蛇形函数”
+    // 生成 7 列的蛇形函数
     const colSpacing = (width - 80)/(columns - 1);
     const colXs = [];
     for (let i=0; i<columns; i++){
@@ -243,14 +234,14 @@
     let svg = document.getElementById("amidakujiSvg");
 
     /**************************************************************
-     * 2. 生成 7 条蛇形竖线 + 顶部圆点
+     * 2. 生成蛇形竖线 + 顶部圆点
      **************************************************************/
     for (let i=0; i<columns; i++){
       const fn = createSnakeFunction(colXs[i], topY, bottomY);
       snakeFuncs.push(fn);
 
       // 绘制竖线(蛇形)
-      const pathData = generatePathData(fn, 0, 1, 40 /*步数*/);
+      const pathData = generatePathData(fn, 0, 1, 40);
       const pathElem = document.createElementNS("http://www.w3.org/2000/svg","path");
       pathElem.setAttribute("d", pathData);
       pathElem.setAttribute("class", "snake-line");
@@ -275,19 +266,18 @@
     // 先随机出若干候选(80~120)
     let M = 80 + Math.floor(Math.random()*40);
     for(let m=0; m<M; m++){
-      const t = Math.random(); // 0..1
+      const t = Math.random();
       const col = Math.floor(Math.random()*(columns-1));
       rawLines.push({ t, col });
     }
     // 按 t 升序
     rawLines.sort((a,b) => a.t - b.t);
 
-    const minDist = 0.02;  // 生成时最小竖直间隔: 两条太近就跳过
+    const minDist = 0.02;  // 最小竖直间隔
     let finalHL = [];
     let prevT = -999, prevC = -999;
     for(let i=0; i<rawLines.length; i++){
       const { t, col } = rawLines[i];
-      // 如果和上一条(可能在同col或邻col)的t值差太小，就跳过
       if (Math.abs(t - prevT) < minDist) {
         continue;
       }
@@ -296,7 +286,7 @@
       prevC = col;
     }
 
-    // 绘制到SVG
+    // 绘制到 SVG
     finalHL.forEach(lineObj => {
       const { t, col } = lineObj;
       const p1 = snakeFuncs[col](t);
@@ -308,25 +298,22 @@
       svg.appendChild(pathElem);
     });
 
-    // 供下落时查找的横梁数据
+    // 下落时查找的横梁数据; 这里留一份原始数据
     let linesData = finalHL.slice();
 
     /**************************************************************
-     * 4. 动画：竖直下落 & 横梁移动，统一像素速度
+     * 4. 动画：竖直下落 & 横梁移动 (统一像素速度)
      **************************************************************/
     const movingCircle = document.getElementById("movingCircle");
     let animationInProgress = false;
     let currentCol = 0;
     let currentT = 0;
-    let state = "down";   // "down" or "horizontal"
-    let nextLine = null;  // 当前要用的横梁
-    let targetCol = 0;    // 水平移动的目标列
+    let state = "down";
+    let nextLine = null; 
+    let targetCol = 0;   
 
-    // 竖直下落：以 paramStep 来推进 t
-    // 如果 t 从 0 到 1 横跨 (bottomY - topY) 像素，则每帧移动多少px?
-    // paramStep=0.005 => 每帧相当于 (bottomY - topY) * 0.005 像素
-    const paramStep = 0.005; // 每帧 t 的增量
-    // 大约竖直像素速度(每帧)
+    // 竖直速度
+    const paramStep = 0.005; 
     const verticalPxPerFrame = (bottomY - topY) * paramStep;
 
     let intervalId = null;
@@ -340,7 +327,6 @@
       state = "down";
       movingCircle.style.display = "block";
 
-      // 设置起始位置
       let pt = snakeFuncs[currentCol](0);
       movingCircle.setAttribute("cx", pt.x);
       movingCircle.setAttribute("cy", pt.y);
@@ -350,27 +336,22 @@
 
     function animationLoop(){
       if (state === "down"){
-        // 竖直下落
         let candidate = getNextLine(currentCol, currentT);
-        let boundaryT = 1; // 到达底部
-
+        let boundaryT = 1;
         if (candidate) {
           boundaryT = candidate.t;
         }
 
         if (currentT + paramStep >= boundaryT){
-          // 到达此横梁 or 到底
           currentT = boundaryT;
           let p = snakeFuncs[currentCol](currentT);
           movingCircle.setAttribute("cx", p.x);
           movingCircle.setAttribute("cy", p.y);
 
           if (Math.abs(currentT - 1) < 1e-5){
-            // 到底
             endAnimation();
             return;
           }
-          // 遇到横梁 => 进入水平方向
           nextLine = candidate;
           if (candidate.col === currentCol){
             targetCol = currentCol + 1;
@@ -386,22 +367,17 @@
         }
       }
       else if (state === "horizontal"){
-        // 水平移动：像素速度与竖直相同
         let p1 = snakeFuncs[currentCol](currentT);
         let p2 = snakeFuncs[targetCol](currentT);
-        let dist = distance(p1, p2); // 总横梁长度(像素)
+        let dist = distance(p1, p2);
 
         if (!nextLine._progress) {
           nextLine._progress = 0;
-          // 移除此条横梁，避免重复检测
-          let idx = linesData.indexOf(nextLine);
-          if (idx >= 0) {
-            linesData.splice(idx, 1);
-          }
+          // ====== 原先这里有删除 linesData 的逻辑，去掉即可 ======
+          // let idx = linesData.indexOf(nextLine);
+          // if (idx >= 0) linesData.splice(idx, 1);
         }
 
-        // 每帧应移动 verticalPxPerFrame 像素，
-        // 占总桥长 dist 的比例 => fractionPerFrame
         let fractionPerFrame = dist > 0 ? (verticalPxPerFrame / dist) : 1;
 
         if (nextLine._progress < 1){
@@ -413,9 +389,7 @@
           movingCircle.setAttribute("cx", currentX);
           movingCircle.setAttribute("cy", currentY);
         } else {
-          // 水平移动结束
           currentCol = targetCol;
-          // 跳过一点，防止立即识别到同一 t (几乎不变)的干扰
           currentT += 0.01;
           state = "down";
           nextLine = null;
@@ -423,29 +397,31 @@
       }
     }
 
+    // 动画结束，重置 linesData，让下一次点击可以正常使用所有横梁
     function endAnimation(){
       clearInterval(intervalId);
       movingCircle.style.display = "none";
       animationInProgress = false;
 
-      // 弹窗祝福
       let { text, icon } = finalColumnBlessings[currentCol];
       showFinalPopup(text, icon);
+
+      // =========== 在此处“复原参数”，恢复 linesData =============
+      linesData = finalHL.slice();   // 回到初始完整的横梁数组
+      // 如果 _progress 已有记录，可以清掉(不清也没啥影响)
+      linesData.forEach(ln => { delete ln._progress; });
     }
 
-    // 获取当前列下方的下一根横梁
     function getNextLine(col, t){
       let candidates = linesData.filter(ln =>
-        (ln.col === col || ln.col === col - 1) &&
-        ln.t > t
+        (ln.col === col || ln.col === col - 1) && ln.t > t
       );
       if (candidates.length === 0) return null;
-      // 返回 t 最小的那个
       return candidates.reduce((prev, curr) => (curr.t < prev.t ? curr : prev));
     }
 
     /**************************************************************
-     * 5. 底部问号图标
+     * 5. 底部图标
      **************************************************************/
     const bottomLabels = document.getElementById("bottomLabels");
     for(let i=0; i<columns; i++){
@@ -455,7 +431,7 @@
     }
 
     /**************************************************************
-     * 6. 弹窗显示祝福
+     * 6. 弹窗祝福
      **************************************************************/
     const finalPopup = document.getElementById("finalPopup");
     const finalIcon = document.getElementById("finalIcon");
@@ -472,25 +448,18 @@
     });
 
     /**************************************************************
-     * ========== 工具函数：蛇形 & 横梁 & 距离 ==========
+     * 工具函数
      **************************************************************/
-
-    /**
-     * createSnakeFunction(cx, top, bottom):
-     *   返回 f(t)(0..1) => {x, y},
-     *   在 [top, bottom] 的垂直范围内画若干波浪.
-     */
     function createSnakeFunction(cx, top, bottom){
       const H = bottom - top;
-      const waveCount = 4 + Math.floor(Math.random()*3); // 4~6段
-      const amplitude = 25 + Math.random()*15; // 25~40
+      const waveCount = 4 + Math.floor(Math.random()*3);
+      const amplitude = 25 + Math.random()*15;
       return function(t){
         let y = top + t*H;
-        // 每段长度
         let segLen = 1 / waveCount;
         let segIndex = Math.floor(t / segLen);
         if (segIndex >= waveCount) segIndex = waveCount - 1;
-        let tInSeg = (t - segIndex*segLen) / segLen; // 0..1
+        let tInSeg = (t - segIndex*segLen) / segLen;
         let dir = (segIndex % 2 === 0) ? 1 : -1;
 
         let offset = amplitude * Math.sin(Math.PI * tInSeg);
@@ -498,37 +467,26 @@
       };
     }
 
-    /**
-     * generatePathData(fn, t0, t1, steps):
-     *   将 [tStart, tEnd] 区间等分, 取 fn(t), 拼成 path 的 d 属性
-     */
     function generatePathData(fn, t0, t1, steps){
-      let dt = (t1 - t0) / steps;
+      let dt = (t1 - t0)/steps;
       let { x, y } = fn(t0);
       let d = `M ${x},${y}`;
-      for (let i = 1; i <= steps; i++){
-        let t = t0 + dt * i;
+      for (let i=1; i<=steps; i++){
+        let t = t0 + dt*i;
         let p = fn(t);
         d += ` L ${p.x},${p.y}`;
       }
       return d;
     }
 
-    /**
-     * createBridgeWavePath(x1, y1, x2, y2):
-     *   在 (x1,y1) 和 (x2,y2) 之间画一小段波浪
-     */
     function createBridgeWavePath(x1, y1, x2, y2){
-      let midX = (x1 + x2) / 2;
-      let midY = (y1 + y2) / 2;
-      let amp = 10; // 横梁波浪幅度
+      let midX = (x1 + x2)/2;
+      let midY = (y1 + y2)/2;
+      let amp = 10;
       return `M ${x1},${y1}
               C ${midX},${midY - amp} ${midX},${midY + amp} ${x2},${y2}`;
     }
 
-    /**
-     * distance(p1, p2): 返回两点之间的像素距离
-     */
     function distance(a, b){
       let dx = a.x - b.x;
       let dy = a.y - b.y;
