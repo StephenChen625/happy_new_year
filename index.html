@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>蛇年抽签收祝福-by陈硕老师</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    /* ============ 页面整体风格 ============ */
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to bottom, #ffeef4 30%, #ffdff0 100%);
+      font-family: 'Comic Sans MS', '幼圆', cursive;
+      overflow-x: hidden;
+      overflow-y: auto;
+      position: relative;
+      min-height: 100vh;
+    }
+
+    /* 顶部标题 */
+    h1 {
+      text-align: center;
+      color: #ff6699;
+      margin: 16px 0 0;
+      font-size: 1.8rem;
+      text-shadow: 1px 1px #fff;
+      position: relative;
+    }
+    h1 img {
+      width: 40px;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #777;
+      font-size: 0.9rem;
+      margin: 4px auto 12px;
+    }
+
+    /* ============ 整体容器 ============ */
+    .container {
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto 30px;
+      border: 2px solid #ff6699;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 2px 8px rgba(255, 100, 150, 0.2);
+      overflow: hidden;
+      position: relative;
+      padding: 10px 0 20px;
+    }
+
+    /* ============ SVG主区域 ============ */
+    .amidakuji-area {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    svg {
+      background: #ffeeef;
+      border: 2px dashed #ff6699;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 400px;
+      height: 600px;
+      position: relative;
+    }
+
+    /* 蛇形竖线、波浪横线的外观 */
+    .snake-line {
+      fill: none;
+      stroke: #ff66aa;
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.9;
+    }
+    .bridge-line {
+      fill: none;
+      stroke: #ffaa44;
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.9;
+    }
+
+    /* 顶部可点击圆点 */
+    .top-circle {
+      fill: #ff88cc;
+      stroke: #fff;
+      stroke-width: 2;
+      cursor: pointer;
+      transition: fill 0.2s;
+    }
+    .top-circle:hover {
+      fill: #ffb3d9; /* 仅改变颜色，不缩放 */
+    }
+
+    /* 小球 */
+    #movingCircle {
+      fill: #ff8844;
+      stroke: #fff;
+      stroke-width: 2;
+      display: none;
+      filter: drop-shadow(0 0 6px rgba(255,150,0,0.6));
+    }
+
+    /* ============ 底部问号图标 ============ */
+    .bottom-labels {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+    .bottom-labels img {
+      width: 38px;
+      height: 38px;
+    }
+
+    /* ============ 大弹窗 - 显示祝福 ============ */
+    .final-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.7);
+      background: rgba(255, 255, 255, 0.95);
+      border: 3px solid #ff6699;
+      border-radius: 10px;
+      padding: 20px;
+      width: 80%;
+      max-width: 320px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(255, 100, 150, 0.3);
+      transition: transform 0.4s ease, opacity 0.4s ease;
+      z-index: 9999;
+      opacity: 0;
+    }
+    .final-popup.show {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    .final-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+    .final-blessing {
+      color: #ff6699;
+      font-size: 1.4rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+      white-space: nowrap;
+    }
+    .close-btn {
+      border: none;
+      background: #ff6699;
+      color: #fff;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 0 3px rgba(255,100,150,0.2);
+    }
+    .close-btn:hover {
+      background: #ff3377;
+    }
+  </style>
+</head>
+<body>
+  <h1>
+    <img src="snake.png" alt="snake" />
+    蛇年抽祝福-by陈硕老师
+  </h1>
+  <div class="subtitle">点击顶部圆点，沿蛇形竖杆穿梭，看看能抽到啥惊喜？</div>
+
+  <div class="container">
+    <div class="amidakuji-area">
+      <svg id="amidakujiSvg" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid meet">
+        <!-- 用JS生成7条蛇形曲线、随机横梁，以及顶部圆点 -->
+        <circle id="movingCircle" r="8" cx="0" cy="0" />
+      </svg>
+    </div>
+  </div>
+
+  <!-- 底部使用问号图标 -->
+  <div class="container" style="padding:5px 0 15px 0;">
+    <div class="bottom-labels" id="bottomLabels"></div>
+  </div>
+
+  <!-- 最终祝福弹窗 -->
+  <div class="final-popup" id="finalPopup">
+    <div class="final-icon" id="finalIcon"></div>
+    <div class="final-blessing" id="finalBlessing"></div>
+    <button class="close-btn" id="closePopup">收到啦^_^</button>
+  </div>
+
+  <script>
+    /**************************************************************
+     * 1. 数据准备 & 参数
+     **************************************************************/
+    const columns = 7;
+    const width = 400, height = 600;
+    const topY = 70, bottomY = 530; // 在SVG里上下边界
+
+    // 每列随机绑定的祝福(含图标)
+    const blessings = [
+      { text: "数学全满分", icon: "📚" },
+      { text: "越来越聪明", icon: "🎓" },
+      { text: "快乐能量满满", icon: "🎈" },
+      { text: "打败难题大魔王", icon: "👾" },
+      { text: "身体壮壮不生病", icon: "💪" },
+      { text: "天天笑容灿烂", icon: "😊" },
+      { text: "看透一切知识的本质", icon: "🔍" },
+      { text: "新年快乐", icon: "🧨" },
+      { text: "学业进步", icon: "📖" },
+      { text: "健康成长", icon: "🌱" },
+      { text: "心想事成", icon: "🌟" },
+      { text: "变身天才数学家", icon: "🎨" },
+    //   { text: "勇敢做自己", icon: "💖" },
+    //   { text: "友情常在", icon: "🤝" },
+    //   { text: "天天都有好心情", icon: "😆" },
+    //   { text: "成为音乐小达人", icon: "🎵" },
+      { text: "幸运常伴你左右", icon: "🌈" },
+      { text: "记忆超群、过目不忘", icon: "✨" },
+    ];
+    let temp = [...blessings];
+    const finalColumnBlessings = [];
+    for(let i=0; i<columns; i++){
+      const idx = Math.floor(Math.random()*temp.length);
+      finalColumnBlessings.push(temp[idx]);
+      temp.splice(idx,1);
+    }
+
+    // 在SVG中，要为7列生成“蛇形函数”
+    const colSpacing = (width - 80)/(columns - 1);
+    const colXs = [];
+    for (let i=0; i<columns; i++){
+      colXs.push(40 + i*colSpacing);
+    }
+
+    let snakeFuncs = [];
+    let svg = document.getElementById("amidakujiSvg");
+
+    /**************************************************************
+     * 2. 生成 7 条蛇形竖线 + 顶部圆点
+     **************************************************************/
+    for (let i=0; i<columns; i++){
+      const fn = createSnakeFunction(colXs[i], topY, bottomY);
+      snakeFuncs.push(fn);
+
+      // 绘制竖线(蛇形)
+      const pathData = generatePathData(fn, 0, 1, 40 /*步数*/);
+      const pathElem = document.createElementNS("http://www.w3.org/2000/svg","path");
+      pathElem.setAttribute("d", pathData);
+      pathElem.setAttribute("class", "snake-line");
+      svg.appendChild(pathElem);
+
+      // 顶部可点击圆点
+      const ptTop = fn(0);
+      const topCircle = document.createElementNS("http://www.w3.org/2000/svg","circle");
+      topCircle.setAttribute("cx", ptTop.x);
+      topCircle.setAttribute("cy", ptTop.y - 20);
+      topCircle.setAttribute("r", 10);
+      topCircle.setAttribute("class", "top-circle");
+      topCircle.dataset.colIndex = i;
+      topCircle.addEventListener("click", onTopCircleClick);
+      svg.appendChild(topCircle);
+    }
+
+    /**************************************************************
+     * 3. 随机生成横梁 + 最小竖直间隔
+     **************************************************************/
+    let rawLines = [];
+    // 先随机出若干候选(80~120)
+    let M = 80 + Math.floor(Math.random()*40);
+    for(let m=0; m<M; m++){
+      const t = Math.random(); // 0..1
+      const col = Math.floor(Math.random()*(columns-1));
+      rawLines.push({ t, col });
+    }
+    // 按 t 升序
+    rawLines.sort((a,b) => a.t - b.t);
+
+    const minDist = 0.02;  // 生成时最小竖直间隔: 两条太近就跳过
+    let finalHL = [];
+    let prevT = -999, prevC = -999;
+    for(let i=0; i<rawLines.length; i++){
+      const { t, col } = rawLines[i];
+      // 如果和上一条(可能在同col或邻col)的t值差太小，就跳过
+      if (Math.abs(t - prevT) < minDist) {
+        continue;
+      }
+      finalHL.push({ t, col });
+      prevT = t;
+      prevC = col;
+    }
+
+    // 绘制到SVG
+    finalHL.forEach(lineObj => {
+      const { t, col } = lineObj;
+      const p1 = snakeFuncs[col](t);
+      const p2 = snakeFuncs[col+1](t);
+      const pathData = createBridgeWavePath(p1.x, p1.y, p2.x, p2.y);
+      const pathElem = document.createElementNS("http://www.w3.org/2000/svg","path");
+      pathElem.setAttribute("d", pathData);
+      pathElem.setAttribute("class", "bridge-line");
+      svg.appendChild(pathElem);
+    });
+
+    // 供下落时查找的横梁数据
+    let linesData = finalHL.slice();
+
+    /**************************************************************
+     * 4. 动画：竖直下落 & 横梁移动，统一像素速度
+     **************************************************************/
+    const movingCircle = document.getElementById("movingCircle");
+    let animationInProgress = false;
+    let currentCol = 0;
+    let currentT = 0;
+    let state = "down";   // "down" or "horizontal"
+    let nextLine = null;  // 当前要用的横梁
+    let targetCol = 0;    // 水平移动的目标列
+
+    // 竖直下落：以 paramStep 来推进 t
+    // 如果 t 从 0 到 1 横跨 (bottomY - topY) 像素，则每帧移动多少px?
+    // paramStep=0.005 => 每帧相当于 (bottomY - topY) * 0.005 像素
+    const paramStep = 0.005; // 每帧 t 的增量
+    // 大约竖直像素速度(每帧)
+    const verticalPxPerFrame = (bottomY - topY) * paramStep;
+
+    let intervalId = null;
+
+    function onTopCircleClick(e){
+      if (animationInProgress) return;
+      animationInProgress = true;
+
+      currentCol = parseInt(e.target.dataset.colIndex);
+      currentT = 0;
+      state = "down";
+      movingCircle.style.display = "block";
+
+      // 设置起始位置
+      let pt = snakeFuncs[currentCol](0);
+      movingCircle.setAttribute("cx", pt.x);
+      movingCircle.setAttribute("cy", pt.y);
+
+      intervalId = setInterval(animationLoop, 20);
+    }
+
+    function animationLoop(){
+      if (state === "down"){
+        // 竖直下落
+        let candidate = getNextLine(currentCol, currentT);
+        let boundaryT = 1; // 到达底部
+
+        if (candidate) {
+          boundaryT = candidate.t;
+        }
+
+        if (currentT + paramStep >= boundaryT){
+          // 到达此横梁 or 到底
+          currentT = boundaryT;
+          let p = snakeFuncs[currentCol](currentT);
+          movingCircle.setAttribute("cx", p.x);
+          movingCircle.setAttribute("cy", p.y);
+
+          if (Math.abs(currentT - 1) < 1e-5){
+            // 到底
+            endAnimation();
+            return;
+          }
+          // 遇到横梁 => 进入水平方向
+          nextLine = candidate;
+          if (candidate.col === currentCol){
+            targetCol = currentCol + 1;
+          } else {
+            targetCol = currentCol - 1;
+          }
+          state = "horizontal";
+        } else {
+          currentT += paramStep;
+          let p = snakeFuncs[currentCol](currentT);
+          movingCircle.setAttribute("cx", p.x);
+          movingCircle.setAttribute("cy", p.y);
+        }
+      }
+      else if (state === "horizontal"){
+        // 水平移动：像素速度与竖直相同
+        let p1 = snakeFuncs[currentCol](currentT);
+        let p2 = snakeFuncs[targetCol](currentT);
+        let dist = distance(p1, p2); // 总横梁长度(像素)
+
+        if (!nextLine._progress) {
+          nextLine._progress = 0;
+          // 移除此条横梁，避免重复检测
+          let idx = linesData.indexOf(nextLine);
+          if (idx >= 0) {
+            linesData.splice(idx, 1);
+          }
+        }
+
+        // 每帧应移动 verticalPxPerFrame 像素，
+        // 占总桥长 dist 的比例 => fractionPerFrame
+        let fractionPerFrame = dist > 0 ? (verticalPxPerFrame / dist) : 1;
+
+        if (nextLine._progress < 1){
+          nextLine._progress += fractionPerFrame;
+          if (nextLine._progress > 1) nextLine._progress = 1;
+
+          let currentX = p1.x + (p2.x - p1.x) * nextLine._progress;
+          let currentY = p1.y + (p2.y - p1.y) * nextLine._progress;
+          movingCircle.setAttribute("cx", currentX);
+          movingCircle.setAttribute("cy", currentY);
+        } else {
+          // 水平移动结束
+          currentCol = targetCol;
+          // 跳过一点，防止立即识别到同一 t (几乎不变)的干扰
+          currentT += 0.01;
+          state = "down";
+          nextLine = null;
+        }
+      }
+    }
+
+    function endAnimation(){
+      clearInterval(intervalId);
+      movingCircle.style.display = "none";
+      animationInProgress = false;
+
+      // 弹窗祝福
+      let { text, icon } = finalColumnBlessings[currentCol];
+      showFinalPopup(text, icon);
+    }
+
+    // 获取当前列下方的下一根横梁
+    function getNextLine(col, t){
+      let candidates = linesData.filter(ln =>
+        (ln.col === col || ln.col === col - 1) &&
+        ln.t > t
+      );
+      if (candidates.length === 0) return null;
+      // 返回 t 最小的那个
+      return candidates.reduce((prev, curr) => (curr.t < prev.t ? curr : prev));
+    }
+
+    /**************************************************************
+     * 5. 底部问号图标
+     **************************************************************/
+    const bottomLabels = document.getElementById("bottomLabels");
+    for(let i=0; i<columns; i++){
+      const img = document.createElement("img");
+      img.src = "cs.jpeg";
+      bottomLabels.appendChild(img);
+    }
+
+    /**************************************************************
+     * 6. 弹窗显示祝福
+     **************************************************************/
+    const finalPopup = document.getElementById("finalPopup");
+    const finalIcon = document.getElementById("finalIcon");
+    const finalBlessing = document.getElementById("finalBlessing");
+    const closePopup = document.getElementById("closePopup");
+
+    function showFinalPopup(text, icon){
+      finalIcon.innerText = icon;
+      finalBlessing.innerText = text;
+      finalPopup.classList.add("show");
+    }
+    closePopup.addEventListener("click", ()=>{
+      finalPopup.classList.remove("show");
+    });
+
+    /**************************************************************
+     * ========== 工具函数：蛇形 & 横梁 & 距离 ==========
+     **************************************************************/
+
+    /**
+     * createSnakeFunction(cx, top, bottom):
+     *   返回 f(t)(0..1) => {x, y},
+     *   在 [top, bottom] 的垂直范围内画若干波浪.
+     */
+    function createSnakeFunction(cx, top, bottom){
+      const H = bottom - top;
+      const waveCount = 4 + Math.floor(Math.random()*3); // 4~6段
+      const amplitude = 25 + Math.random()*15; // 25~40
+      return function(t){
+        let y = top + t*H;
+        // 每段长度
+        let segLen = 1 / waveCount;
+        let segIndex = Math.floor(t / segLen);
+        if (segIndex >= waveCount) segIndex = waveCount - 1;
+        let tInSeg = (t - segIndex*segLen) / segLen; // 0..1
+        let dir = (segIndex % 2 === 0) ? 1 : -1;
+
+        let offset = amplitude * Math.sin(Math.PI * tInSeg);
+        return { x: cx + dir*offset, y };
+      };
+    }
+
+    /**
+     * generatePathData(fn, t0, t1, steps):
+     *   将 [tStart, tEnd] 区间等分, 取 fn(t), 拼成 path 的 d 属性
+     */
+    function generatePathData(fn, t0, t1, steps){
+      let dt = (t1 - t0) / steps;
+      let { x, y } = fn(t0);
+      let d = `M ${x},${y}`;
+      for (let i = 1; i <= steps; i++){
+        let t = t0 + dt * i;
+        let p = fn(t);
+        d += ` L ${p.x},${p.y}`;
+      }
+      return d;
+    }
+
+    /**
+     * createBridgeWavePath(x1, y1, x2, y2):
+     *   在 (x1,y1) 和 (x2,y2) 之间画一小段波浪
+     */
+    function createBridgeWavePath(x1, y1, x2, y2){
+      let midX = (x1 + x2) / 2;
+      let midY = (y1 + y2) / 2;
+      let amp = 10; // 横梁波浪幅度
+      return `M ${x1},${y1}
+              C ${midX},${midY - amp} ${midX},${midY + amp} ${x2},${y2}`;
+    }
+
+    /**
+     * distance(p1, p2): 返回两点之间的像素距离
+     */
+    function distance(a, b){
+      let dx = a.x - b.x;
+      let dy = a.y - b.y;
+      return Math.sqrt(dx*dx + dy*dy);
+    }
+  </script>
+</body>
+</html>
